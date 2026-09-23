@@ -31,9 +31,9 @@ export async function POST(req: Request) {
           where: { id: orderId },
           data: {
             status: "PAID",
-            stripePaymentId: typeof session.payment_intent === "string" 
-              ? session.payment_intent 
-              : session.payment_intent?.id || null,
+            stripePaymentId: typeof session.payment_intent === "string"
+              ? session.payment_intent
+              : null,
           },
         })
         console.log(`Encomenda ${orderId} atualizada para PAID`)
