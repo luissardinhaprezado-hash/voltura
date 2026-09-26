@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import Stripe from "stripe"
 import { prisma } from "@/lib/prisma"
+import { sendOrderConfirmationEmail } from "@/lib/email"
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string)
 
@@ -27,7 +28,7 @@ export async function POST(req: Request) {
 
     if (orderId) {
       try {
-        await prisma.order.update({
+        const order = await prisma.order.update({
           where: { id: orderId },
           data: {
             status: "PAID",
@@ -35,10 +36,32 @@ export async function POST(req: Request) {
               ? session.payment_intent
               : null,
           },
+          include: {
+            items: {
+              include: { product: true },
+            },
+          },
         })
-        console.log(`Encomenda ${orderId} atualizada para PAID`)
+
+        console.log(`Encomenda ${order.orderNumber} atualizada para PAID`)
+
+        // Envia email de confirmação
+        if (process.env.RESEND_API_KEY) {
+          await sendOrderConfirmationEmail({
+            to: order.customerEmail,
+            orderNumber: order.orderNumber,
+            customerName: order.customerName,
+            total: Number(order.total),
+            items: order.items.map((item) => ({
+              name: item.product?.name || "Produto",
+              quantity: item.quantity,
+              price: Number(item.price),
+            })),
+          })
+          console.log(`Email enviado para ${order.customerEmail}`)
+        }
       } catch (error) {
-        console.error("Erro ao atualizar encomenda:", error)
+        console.error("Erro ao processar encomenda:", error)
       }
     }
   }

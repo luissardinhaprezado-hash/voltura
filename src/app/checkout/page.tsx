@@ -11,6 +11,9 @@ export default function CheckoutPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
 
+  const SHIPPING_COST = totalPrice >= 500 ? 0 : 15
+  const finalTotal = totalPrice + SHIPPING_COST
+
   const [form, setForm] = useState({
     name: "",
     email: "",
@@ -38,7 +41,8 @@ export default function CheckoutPage() {
         body: JSON.stringify({
           items,
           customer: form,
-          total: totalPrice,
+          total: finalTotal,
+          shippingCost: SHIPPING_COST,
         }),
       })
 
@@ -143,7 +147,7 @@ export default function CheckoutPage() {
             )}
 
             <button type="submit" disabled={loading} className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-4 rounded-full transition disabled:opacity-60">
-              {loading ? "A processar..." : `Pagar ${totalPrice.toFixed(2)} €`}
+              {loading ? "A processar..." : `Pagar ${finalTotal.toFixed(2)} €`}
             </button>
           </form>
 
@@ -171,9 +175,13 @@ export default function CheckoutPage() {
                   <span className="text-gray-500">Subtotal</span>
                   <span>{totalPrice.toFixed(2)} €</span>
                 </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-500">Envio</span>
+                  <span>{SHIPPING_COST === 0 ? "Grátis" : `${SHIPPING_COST.toFixed(2)} €`}</span>
+                </div>
                 <div className="flex justify-between font-bold text-base pt-2">
                   <span>Total</span>
-                  <span>{totalPrice.toFixed(2)} €</span>
+                  <span>{finalTotal.toFixed(2)} €</span>
                 </div>
               </div>
             </div>
